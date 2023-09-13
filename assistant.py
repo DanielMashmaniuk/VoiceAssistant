@@ -46,5 +46,5 @@ if __name__ == "__main__":
         elif "відкрий YouTube" in command:
             webbrowser.open("https://www.youtube.com")
         elif "до побачення" in command:
-            speak("До побачення! Маєте гарного дня!")
+            print("До побачення! Маєте гарного дня!")
             break
