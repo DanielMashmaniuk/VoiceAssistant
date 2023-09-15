@@ -1,50 +1,100 @@
-import pyttsx3  #
 import speech_recognition as sr
-import datetime
-import webbrowser
+import pyttsx3
+from googletrans import Translator
+from googlesearch import search
 
-# Ініціалізація голоса
+# Ініціалізація розпізнавача
+recognizer = sr.Recognizer()
+
+# Ініціалізація синтезатора мовлення
 engine = pyttsx3.init()
 
+# Функція для розпізнавання голосу та виконання команд
+def recognize_command():
+    with sr.Microphone() as source:
+        print("Скажіть команду:")
+        audio = recognizer.listen(source)
 
-# Функція для голосового виводу тексту
+    try:
+        command = recognizer.recognize_google(audio).lower()
+        print("Ви сказали: " + command)
+        return command
+    except sr.UnknownValueError:
+        print("Розпізнавання не вдалося")
+        return ""
+    except sr.RequestError as e:
+        print("Помилка при зверненні до служби розпізнавання: {0}".format(e))
+        return ""
+
+# Функція для відтворення тексту голосом
 def speak(text):
     engine.say(text)
     engine.runAndWait()
 
+# Функція для виконання арифметичних операцій
+def calculate(command):
+    try:
+        # Розділити команду на операнди та операцію
+        parts = command.split()
+        operand1 = float(parts[0])
+        operator = parts[1]
+        operand2 = float(parts[2])
 
-# Функція для розпізнавання мови
-def listen():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Слухаю...")
-        audio = recognizer.listen(source)
-        command = ""
-        try:
-            command = recognizer.recognize_google(audio, language="uk-UA")
-            print("Ви сказали: " + command)
-        except sr.UnknownValueError:
-            print("Не розпізнано")
-        return command
+        if operator == "+":
+            result = operand1 + operand2
+        elif operator == "-":
+            result = operand1 - operand2
+        elif operator == "*":
+            result = operand1 * operand2
+        elif operator == "/":
+            result = operand1 / operand2
+        else:
+            return "Невідома операція"
 
+        return f"Результат: {result}"
+    except Exception as e:
+        return "Помилка обчислення: " + str(e)
 
-# Основний цикл програми
-if __name__ == "__main__":
-    while True:
-        command = listen().lower()
+# Функція для перекладу тексту
+def translate_text(text, target_language):
+    translator = Translator()
+    translated_text = translator.translate(text, dest=target_language)
+    return translated_text.text
 
-        if "привіт" in command:
-            speak("Привіт! Як я можу вам допомогти?")
-        elif "як справи" in command:
-            speak("Справи добре, дякую! Як у вас?")
-        elif "як тебе звати" in command:
-            speak("Мене звуть Джарвіс.")
-        elif "що ти вмієш" in command:
-            speak("Я можу відкривати веб-сторінки, розповідати про погоду, і виконувати інші завдання.")
-        elif "відкрий Google" in command:
-            webbrowser.open("https://www.google.com")
-        elif "відкрий YouTube" in command:
-            webbrowser.open("https://www.youtube.com")
-        elif "до побачення" in command:
-            print("До побачення! Маєте гарного дня!")
-            break
+# Функція для пошуку в Інтернеті та виведення результатів
+def search_web(query):
+    results = list(search(query, num=5, stop=5, pause=2.0))
+    if results:
+        speak("Here are the top 5 search results:")
+        for i, result in enumerate(results, start=1):
+            speak(f"Result {i}: {result}")
+    else:
+        speak("No search results found.")
+
+# Основний цикл для слухання команд
+while True:
+    command = recognize_command()
+
+    if "hello" in command:
+        speak("Hello! How can I help you?")
+    elif "what is your name" in command:
+        speak("I am your virtual assistant.")
+    elif "calculate" in command:
+        result = calculate(command.replace("calculate", "").strip())
+        speak(result)
+    elif "translate" in command:
+        speak("What would you like to translate?")
+        text_to_translate = recognize_command()
+        speak("To which language would you like to translate it?")
+        target_language = recognize_command()
+        translated_text = translate_text(text_to_translate, target_language)
+        speak(f"Translation: {translated_text}")
+    elif "search" in command:
+        speak("What would you like to search for?")
+        search_query = recognize_command()
+        search_web(search_query)
+    elif "exit" in command:
+        speak("Goodbye!")
+        break
+    else:
+        speak("I'm sorry, I didn't understand that command.")
